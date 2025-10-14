@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import './Signup.css'
 
 function Signup({ onSignup }) {
+  const navigate = useNavigate()
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -51,7 +52,17 @@ function Signup({ onSignup }) {
     const validationErrors = validate()
     
     if (Object.keys(validationErrors).length === 0) {
-      onSignup({ username: formData.username, email: formData.email })
+      const userData = {
+        username: formData.username,
+        email: formData.email,
+        fullName: formData.username.charAt(0).toUpperCase() + formData.username.slice(1),
+        overallPoints: 0,
+        overallRank: 0,
+        gameweekPoints: 0,
+        totalTeams: 0
+      }
+      onSignup(userData)
+      navigate('/main-menu')
     } else {
       setErrors(validationErrors)
     }
@@ -61,9 +72,11 @@ function Signup({ onSignup }) {
     <div className="signup-container">
       <div className="signup-card">
         <div className="signup-header">
-          <h1>🏏 Join Fantasy Cricket</h1>
+          <span className="header-icon">🏏</span>
+          <h1>Join Fantasy Cricket</h1>
           <p>Create your account and start playing</p>
         </div>
+        
         <form onSubmit={handleSubmit} className="signup-form">
           <div className="form-group">
             <label htmlFor="username">Username</label>
@@ -73,20 +86,20 @@ function Signup({ onSignup }) {
               name="username"
               value={formData.username}
               onChange={handleChange}
-              placeholder="Choose a username"
+              placeholder="Choose a unique username"
             />
             {errors.username && <span className="error">{errors.username}</span>}
           </div>
           
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email">Email Address</label>
             <input
               type="email"
               id="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="Enter your email"
+              placeholder="Enter your email address"
             />
             {errors.email && <span className="error">{errors.email}</span>}
           </div>
@@ -99,7 +112,7 @@ function Signup({ onSignup }) {
               name="password"
               value={formData.password}
               onChange={handleChange}
-              placeholder="Create a password"
+              placeholder="Create a strong password"
             />
             {errors.password && <span className="error">{errors.password}</span>}
           </div>
@@ -112,15 +125,16 @@ function Signup({ onSignup }) {
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleChange}
-              placeholder="Confirm your password"
+              placeholder="Re-enter your password"
             />
             {errors.confirmPassword && <span className="error">{errors.confirmPassword}</span>}
           </div>
           
           <button type="submit" className="signup-btn">Sign Up</button>
         </form>
+        
         <div className="signup-footer">
-          <p>Already have an account? <Link to="/login">Login here</Link></p>
+          <p>Already have an account? <Link to="/login">Log in here</Link></p>
         </div>
       </div>
     </div>

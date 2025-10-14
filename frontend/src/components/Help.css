@@ -1,0 +1,286 @@
+.help-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.help-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  background: rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  padding: 2rem;
+  border-radius: 20px;
+}
+
+.help-header h1 {
+  color: white;
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.help-header p {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.1rem;
+}
+
+.help-tabs {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.tab-btn {
+  padding: 1rem 3rem;
+  border: 2px solid white;
+  background: transparent;
+  color: white;
+  border-radius: 25px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.tab-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.tab-btn.active {
+  background: white;
+  color: #1e3c72;
+}
+
+.help-content {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+/* FAQs Section */
+.faqs-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.faq-category {
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 2rem;
+}
+
+.faq-category:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.category-title {
+  color: #1e3c72;
+  font-size: 1.6rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 3px solid #667eea;
+}
+
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.faq-item {
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+
+.faq-item:hover {
+  border-color: #667eea;
+}
+
+.faq-question {
+  padding: 1.5rem;
+  background: #f8f9fa;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  transition: background 0.3s;
+}
+
+.faq-question:hover {
+  background: #e9ecef;
+}
+
+.faq-question h3 {
+  color: #2c3e50;
+  font-size: 1.1rem;
+  margin: 0;
+  flex: 1;
+}
+
+.arrow {
+  font-size: 1rem;
+  color: #667eea;
+  transition: transform 0.3s;
+  font-weight: bold;
+}
+
+.arrow.expanded {
+  transform: rotate(180deg);
+}
+
+.faq-answer {
+  padding: 1.5rem;
+  background: white;
+  border-top: 2px solid #e0e0e0;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.faq-answer p {
+  color: #555;
+  line-height: 1.8;
+  margin: 0;
+}
+
+/* Rules Section */
+.rules-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.rule-category {
+  border: 2px solid #e0e0e0;
+  border-radius: 15px;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+
+.rule-category:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+}
+
+.rule-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1.5rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.rule-icon {
+  font-size: 2rem;
+}
+
+.rule-header h2 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.rule-content {
+  padding: 2rem;
+}
+
+.rule-section {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.rule-section:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.rule-section h3 {
+  color: #2c3e50;
+  font-size: 1.2rem;
+  margin-bottom: 0.75rem;
+}
+
+.rule-section p {
+  color: #555;
+  line-height: 1.8;
+  margin: 0;
+}
+
+/* Contact Support */
+.contact-support {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 2rem;
+  border-radius: 15px;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.contact-support h3 {
+  margin-bottom: 0.75rem;
+  font-size: 1.5rem;
+}
+
+.contact-support p {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.contact-support a {
+  color: #ffd700;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s;
+}
+
+.contact-support a:hover {
+  color: #ffed4e;
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .help-container {
+    padding: 1rem;
+  }
+  
+  .help-tabs {
+    flex-direction: column;
+  }
+  
+  .tab-btn {
+    width: 100%;
+  }
+  
+  .help-content {
+    padding: 1.5rem;
+  }
+  
+  .category-title,
+  .rule-header h2 {
+    font-size: 1.3rem;
+  }
+  
+  .faq-question h3,
+  .rule-section h3 {
+    font-size: 1rem;
+  }
+}
