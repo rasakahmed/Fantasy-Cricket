@@ -3,6 +3,7 @@ import { players } from '../data/mockData'
 import './AddTeam.css'
 
 function AddTeam({ user }) {
+  const [teamExists, setTeamExists] = useState(false)
   const [teamName, setTeamName] = useState('')
   const [selectedPlayers, setSelectedPlayers] = useState({
     batsman1: null,
@@ -30,6 +31,11 @@ function AddTeam({ user }) {
   const allPlayers = players
 
   useEffect(() => {
+    const existing = localStorage.getItem('userTeam')
+    if (existing) setTeamExists(true)
+  }, [])
+
+  useEffect(() => {
     calculateBudget()
     checkTeamConstraints()
   }, [selectedPlayers])
@@ -37,59 +43,40 @@ function AddTeam({ user }) {
   const calculateBudget = () => {
     let totalCost = 0
     Object.values(selectedPlayers).forEach(player => {
-      if (player) {
-        totalCost += player.cost
-      }
+      if (player) totalCost += player.cost
     })
-    setRemainingBudget(125 - totalCost)
+    setRemainingBudget(150 - totalCost)
   }
 
   const checkTeamConstraints = () => {
     const teamCount = {}
     Object.values(selectedPlayers).forEach(player => {
-      if (player) {
-        teamCount[player.team] = (teamCount[player.team] || 0) + 1
-      }
+      if (player) teamCount[player.team] = (teamCount[player.team] || 0) + 1
     })
-    
     const newErrors = {}
     Object.entries(teamCount).forEach(([team, count]) => {
-      if (count > 3) {
-        newErrors.teamConstraint = `Cannot have more than 3 players from ${team}`
-      }
+      if (count > 3) newErrors.teamConstraint = `Cannot have more than 3 players from ${team}`
     })
-    setErrors(newErrors)
+    setErrors(prev => ({ ...prev, teamConstraint: newErrors.teamConstraint }))
   }
 
   const handlePlayerSelect = (position, playerId) => {
     const player = players.find(p => p.id === parseInt(playerId))
-    
     if (player) {
-      // Check if player is already selected in another position
       const alreadySelected = Object.entries(selectedPlayers).find(
         ([key, val]) => val && val.id === player.id && key !== position
       )
-      
       if (alreadySelected) {
         alert('This player is already selected in another position!')
         return
       }
-      
-      // Remove old player from captain/vice captain if being replaced
       if (selectedPlayers[position]) {
         if (captain === selectedPlayers[position].id) setCaptain(null)
         if (viceCaptain === selectedPlayers[position].id) setViceCaptain(null)
       }
-      
-      setSelectedPlayers(prev => ({
-        ...prev,
-        [position]: player
-      }))
+      setSelectedPlayers(prev => ({ ...prev, [position]: player }))
     } else {
-      setSelectedPlayers(prev => ({
-        ...prev,
-        [position]: null
-      }))
+      setSelectedPlayers(prev => ({ ...prev, [position]: null }))
     }
   }
 
@@ -111,39 +98,27 @@ function AddTeam({ user }) {
 
   const validateTeam = () => {
     const newErrors = {}
-    
-    if (!teamName.trim()) {
-      newErrors.teamName = 'Team name is required'
-    }
-    
+    if (!teamName.trim()) newErrors.teamName = 'Team name is required'
     const allSelected = Object.values(selectedPlayers).every(player => player !== null)
-    if (!allSelected) {
-      newErrors.players = 'Please select all 11 players'
-    }
-    
-    if (!captain) {
-      newErrors.captain = 'Please select a captain'
-    }
-    
-    if (!viceCaptain) {
-      newErrors.viceCaptain = 'Please select a vice captain'
-    }
-    
-    if (remainingBudget < 0) {
-      newErrors.budget = 'Budget exceeded!'
-    }
-    
+    if (!allSelected) newErrors.players = 'Please select all 11 players'
+    if (!captain) newErrors.captain = 'Please select a captain'
+    if (!viceCaptain) newErrors.viceCaptain = 'Please select a vice captain'
+    if (remainingBudget < 0) newErrors.budget = 'Budget exceeded!'
     return newErrors
   }
 
   const handleAddTeam = () => {
-    const validationErrors = validateTeam()
-    
-    if (Object.keys(validationErrors).length > 0 || Object.keys(errors).length > 0) {
-      setErrors({...errors, ...validationErrors})
+    if (teamExists) {
+      setErrors(prev => ({ ...prev, teamExists: 'You can only create one team per account. Modify your existing team instead.' }))
       return
     }
-    
+    const validationErrors = validateTeam()
+    const hasOtherErrors = Object.values(errors).filter(Boolean).length > 0
+    if (Object.keys(validationErrors).length > 0 || hasOtherErrors) {
+      setErrors(prev => ({ ...prev, ...validationErrors }))
+      return
+    }
+
     const team = {
       name: teamName,
       players: selectedPlayers,
@@ -151,16 +126,19 @@ function AddTeam({ user }) {
       viceCaptain,
       createdAt: new Date().toISOString()
     }
-    
+
     localStorage.setItem('userTeam', JSON.stringify(team))
     setShowSuccess(true)
     setTeamPlayers(Object.values(selectedPlayers))
-    
+    setTeamExists(true)
     setTimeout(() => setShowSuccess(false), 5000)
   }
 
   const handleClearAll = () => {
-    setTeamName('')
+    if (teamExists) {
+      // Keep existing team; just clear the selection UI
+      setTeamName('')
+    }
     setSelectedPlayers({
       batsman1: null,
       batsman2: null,
@@ -188,6 +166,13 @@ function AddTeam({ user }) {
         <p>Create your dream cricket team within 125 points budget</p>
       </div>
 
+      {teamExists && (
+        <div className="success-message" style={{ background: 'linear-gradient(135deg, #f39c12 0%, #e67e22 100%)' }}>
+          <h3>ℹ️ Team Already Created</h3>
+          <p>You can only create one team per account. Please use Modify Team to change your squad before matches start.</p>
+        </div>
+      )}
+
       <div className="budget-display">
         <div className="budget-card">
           <span className="budget-label">Remaining Budget</span>
@@ -209,9 +194,9 @@ function AddTeam({ user }) {
         </div>
       )}
 
-      {Object.keys(errors).length > 0 && (
+      {Object.values(errors).filter(Boolean).length > 0 && (
         <div className="error-messages">
-          {Object.values(errors).map((error, index) => (
+          {Object.values(errors).filter(Boolean).map((error, index) => (
             <p key={index}>❌ {error}</p>
           ))}
         </div>
@@ -227,6 +212,7 @@ function AddTeam({ user }) {
             onChange={(e) => setTeamName(e.target.value)}
             placeholder="Enter unique team name"
             className="team-name-input"
+            disabled={teamExists}
           />
         </div>
 
@@ -240,6 +226,7 @@ function AddTeam({ user }) {
                   value={selectedPlayers[position]?.id || ''}
                   onChange={(e) => handlePlayerSelect(position, e.target.value)}
                   className="player-select"
+                  disabled={teamExists}
                 >
                   <option value="">Select Batsman</option>
                   {batsmen.map(player => (
@@ -248,7 +235,7 @@ function AddTeam({ user }) {
                     </option>
                   ))}
                 </select>
-                {selectedPlayers[position] && (
+                {selectedPlayers[position] && !teamExists && (
                   <div className="captain-selects">
                     <label className="checkbox-label">
                       <input
@@ -282,6 +269,7 @@ function AddTeam({ user }) {
                 value={selectedPlayers.wicketKeeper?.id || ''}
                 onChange={(e) => handlePlayerSelect('wicketKeeper', e.target.value)}
                 className="player-select"
+                disabled={teamExists}
               >
                 <option value="">Select Wicket Keeper</option>
                 {wicketKeepers.map(player => (
@@ -290,7 +278,7 @@ function AddTeam({ user }) {
                   </option>
                 ))}
               </select>
-              {selectedPlayers.wicketKeeper && (
+              {selectedPlayers.wicketKeeper && !teamExists && (
                 <div className="captain-selects">
                   <label className="checkbox-label">
                     <input
@@ -324,6 +312,7 @@ function AddTeam({ user }) {
                   value={selectedPlayers[position]?.id || ''}
                   onChange={(e) => handlePlayerSelect(position, e.target.value)}
                   className="player-select"
+                  disabled={teamExists}
                 >
                   <option value="">Select Bowler</option>
                   {bowlers.map(player => (
@@ -332,7 +321,7 @@ function AddTeam({ user }) {
                     </option>
                   ))}
                 </select>
-                {selectedPlayers[position] && (
+                {selectedPlayers[position] && !teamExists && (
                   <div className="captain-selects">
                     <label className="checkbox-label">
                       <input
@@ -367,6 +356,7 @@ function AddTeam({ user }) {
                   value={selectedPlayers[position]?.id || ''}
                   onChange={(e) => handlePlayerSelect(position, e.target.value)}
                   className="player-select"
+                  disabled={teamExists}
                 >
                   <option value="">Select Any Player</option>
                   {allPlayers.map(player => (
@@ -375,7 +365,7 @@ function AddTeam({ user }) {
                     </option>
                   ))}
                 </select>
-                {selectedPlayers[position] && (
+                {selectedPlayers[position] && !teamExists && (
                   <div className="captain-selects">
                     <label className="checkbox-label">
                       <input
@@ -401,8 +391,12 @@ function AddTeam({ user }) {
         </div>
 
         <div className="form-actions">
-          <button onClick={handleAddTeam} className="add-btn">Add Team</button>
-          <button onClick={handleClearAll} className="clear-btn">Clear All</button>
+          <button onClick={handleAddTeam} className="add-btn" disabled={teamExists} title={teamExists ? 'Only one team allowed per account' : ''}>
+            Add Team
+          </button>
+          <button onClick={handleClearAll} className="clear-btn">
+            Clear All
+          </button>
         </div>
       </div>
 

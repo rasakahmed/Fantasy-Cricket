@@ -1,66 +1,140 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import './Leagues.css'
+import { gameweekPoints } from '../data/mockData'
 
 function Leagues({ user }) {
+  const navigate = useNavigate()
+
+  // UI modals
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showJoinModal, setShowJoinModal] = useState(false)
   const [selectedLeague, setSelectedLeague] = useState(null)
-  const [newLeague, setNewLeague] = useState({
-    name: '',
-    type: 'public'
-  })
+
+  // Forms
+  const [newLeague, setNewLeague] = useState({ name: '', type: 'public' })
   const [joinKey, setJoinKey] = useState('')
+
+  // Data
   const [userLeagues, setUserLeagues] = useState([])
   const [availableLeagues, setAvailableLeagues] = useState([
-    {
-      id: 1,
-      name: 'IPL Champions League 2025',
-      type: 'public',
-      members: 1250,
-      creator: 'admin',
-      createdAt: '2025-10-01'
-    },
-    {
-      id: 2,
-      name: 'Weekend Warriors',
-      type: 'public',
-      members: 580,
-      creator: 'cricketfan123',
-      createdAt: '2025-10-05'
-    },
-    {
-      id: 3,
-      name: 'Office Cricket League',
-      type: 'private',
-      members: 45,
-      creator: 'johndoe',
-      joinKey: 'OFFICE2025',
-      createdAt: '2025-10-08'
-    },
-    {
-      id: 4,
-      name: 'Pro Players Only',
-      type: 'public',
-      members: 2100,
-      creator: 'proplayer',
-      createdAt: '2025-09-28'
-    }
+    { id: 1, name: 'IPL Champions League 2025', type: 'public', members: 1250, creator: 'admin', createdAt: '2025-10-01' },
+    { id: 2, name: 'Weekend Warriors', type: 'public', members: 580, creator: 'cricketfan123', createdAt: '2025-10-05' },
+    { id: 3, name: 'Office Cricket League', type: 'private', members: 45, creator: 'johndoe', joinKey: 'OFFICE2025', createdAt: '2025-10-08' },
+    { id: 4, name: 'Pro Players Only', type: 'public', members: 2100, creator: 'proplayer', createdAt: '2025-09-28' }
   ])
 
+  // Details modal (leaderboard)
+  const [detailsOpen, setDetailsOpen] = useState(false)
+  const [detailsLeague, setDetailsLeague] = useState(null)
+  const [leaderboard, setLeaderboard] = useState([])
+
   useEffect(() => {
-    const storedLeagues = localStorage.getItem('userLeagues')
-    if (storedLeagues) {
-      setUserLeagues(JSON.parse(storedLeagues))
+    try {
+      const storedLeagues = localStorage.getItem('userLeagues')
+      if (storedLeagues) setUserLeagues(JSON.parse(storedLeagues))
+    } catch {
+      // ignore parse issues
     }
   }, [])
 
+  const getUserTeam = useMemo(() => {
+    try {
+      const raw = localStorage.getItem('userTeam')
+      return raw ? JSON.parse(raw) : null
+    } catch {
+      return null
+    }
+  }, [])
+
+  const getCurrentGameweek = () => {
+    const startDate = new Date('2025-10-01')
+    const today = new Date()
+    const diffTime = Math.abs(today - startDate)
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return Math.max(1, Math.ceil(diffDays / 7))
+  }
+
+  // Compute GW points for the current user from their selected players only
+  const computeUserGWPoints = () => {
+    const team = getUserTeam
+    if (!team) return { gwPoints: 0 }
+
+    const pointsMap = new Map(gameweekPoints.map(p => [p.playerId, p.points]))
+    const captainId = team.captain
+    const viceId = team.viceCaptain
+    const captainPlayed = pointsMap.has(captainId)
+
+    let sum = 0
+    for (const p of Object.values(team.players)) {
+      if (!p) continue
+      const base = pointsMap.get(p.id) ?? 0
+      if (p.id === captainId) {
+        sum += base * 2
+      } else if (!captainPlayed && p.id === viceId) {
+        sum += base * 2
+      } else {
+        sum += base
+      }
+    }
+    return { gwPoints: sum }
+  }
+
+  // Persist per-league total points for the user (roll forward once per GW)
+  const updateAndGetUserLeagueTotals = (leagueId) => {
+    const key = 'userLeagueTotals'
+    const currentWeek = getCurrentGameweek()
+    const totals = JSON.parse(localStorage.getItem(key) || '{}')
+    const entry = totals[leagueId] || { totalPoints: 0, lastUpdatedWeek: 0 }
+    const { gwPoints } = computeUserGWPoints()
+
+    if (entry.lastUpdatedWeek !== currentWeek) {
+      entry.totalPoints += gwPoints
+      entry.lastUpdatedWeek = currentWeek
+      totals[leagueId] = entry
+      localStorage.setItem(key, JSON.stringify(totals))
+    }
+    return totals[leagueId]
+  }
+
+  // Mock other competitors in leaderboard
+  const generateMockCompetitors = (count = 9) => {
+    const sampleNames = ['Warriors XI','Strikers','Thunderbolts','Blaze United','Spin Kings','Yorkers','Boundary Bashers','Pace Setters','Cover Drivers','Night Watchmen']
+    const sampleUsers = ['rahul','sachin','anil','arjun','priya','neha','vijay','amit','sana','zara']
+    const arr = []
+    for (let i = 0; i < count; i++) {
+      const tp = Math.floor(600 + Math.random() * 1200)
+      const gw = Math.floor(20 + Math.random() * 120)
+      arr.push({ rank: 0, teamName: sampleNames[i % sampleNames.length], username: sampleUsers[i % sampleUsers.length], gwPoints: gw, totalPoints: tp })
+    }
+    return arr
+  }
+
+  const openLeagueDetails = (leagueId) => {
+    const fullLeague = availableLeagues.find(l => l.id === leagueId)
+    const myEntry = userLeagues.find(l => l.id === leagueId)
+    if (!fullLeague || !myEntry) return
+
+    const team = getUserTeam
+    const teamName = team?.name || `${user?.username || 'User'}'s Team`
+    const { totalPoints } = updateAndGetUserLeagueTotals(leagueId)
+    const { gwPoints } = computeUserGWPoints()
+
+    const rows = [
+      ...generateMockCompetitors(),
+      { rank: 0, teamName, username: user?.username || 'User', gwPoints, totalPoints }
+    ]
+      .sort((a, b) => b.totalPoints - a.totalPoints)
+      .map((row, idx) => ({ ...row, rank: idx + 1 }))
+
+    setLeaderboard(rows)
+    setDetailsLeague(fullLeague)
+    setDetailsOpen(true)
+  }
+
   const generateJoinKey = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    let key = ''
-    for (let i = 0; i < 8; i++) {
-      key += chars.charAt(Math.floor(Math.random() * chars.length))
-    }
-    return key
+    return Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
   }
 
   const handleCreateLeague = () => {
@@ -69,35 +143,27 @@ function Leagues({ user }) {
       return
     }
 
-    const createdLeague = {
+    const created = {
       id: Date.now(),
       name: newLeague.name,
       type: newLeague.type,
       members: 1,
       creator: user?.username || 'User',
       createdAt: new Date().toISOString().split('T')[0],
-      joinKey: newLeague.type === 'private' ? generateJoinKey() : null,
-      userRank: 1,
-      userPoints: 0
+      joinKey: newLeague.type === 'private' ? generateJoinKey() : null
     }
 
-    // Add to available leagues
-    setAvailableLeagues(prev => [createdLeague, ...prev])
+    setAvailableLeagues(prev => [created, ...prev])
 
-    // Add to user's leagues
-    const updatedUserLeagues = [...userLeagues, {
-      id: createdLeague.id,
-      name: createdLeague.name,
-      rank: 1,
-      points: 0,
-      members: 1
-    }]
+    const updatedUserLeagues = [
+      ...userLeagues,
+      { id: created.id, name: created.name, rank: 1, points: 0, members: 1 }
+    ]
     setUserLeagues(updatedUserLeagues)
     localStorage.setItem('userLeagues', JSON.stringify(updatedUserLeagues))
 
-    // Show join key if private
-    if (createdLeague.joinKey) {
-      alert(`League created! Share this join key with others: ${createdLeague.joinKey}`)
+    if (created.joinKey) {
+      alert(`League created! Share this join key: ${created.joinKey}`)
     } else {
       alert('League created successfully!')
     }
@@ -106,15 +172,37 @@ function Leagues({ user }) {
     setShowCreateModal(false)
   }
 
+  const requireTeamBeforeJoin = () => {
+    if (!getUserTeam) {
+      if (window.confirm('You must create a team before joining a league. Go to Add Team now?')) {
+        navigate('/add-team')
+      }
+      return false
+    }
+    return true
+  }
+
+  const joinLeagueDirectly = (league) => {
+    const updatedUserLeagues = [
+      ...userLeagues,
+      { id: league.id, name: league.name, rank: league.members + 1, points: 0, members: league.members }
+    ]
+    setUserLeagues(updatedUserLeagues)
+    localStorage.setItem('userLeagues', JSON.stringify(updatedUserLeagues))
+
+    setAvailableLeagues(prev => prev.map(l => l.id === league.id ? { ...l, members: l.members + 1 } : l))
+    alert(`Successfully joined ${league.name}!`)
+    setShowJoinModal(false)
+    setJoinKey('')
+    setSelectedLeague(null)
+  }
+
   const handleJoinLeague = (league) => {
-    // Check if already joined
-    const alreadyJoined = userLeagues.find(l => l.id === league.id)
-    if (alreadyJoined) {
+    if (!requireTeamBeforeJoin()) return
+    if (isLeagueJoined(league.id)) {
       alert('You have already joined this league!')
       return
     }
-
-    // If private league, ask for join key
     if (league.type === 'private') {
       setSelectedLeague(league)
       setShowJoinModal(true)
@@ -123,43 +211,75 @@ function Leagues({ user }) {
     }
   }
 
-  const joinLeagueDirectly = (league) => {
-    const updatedUserLeagues = [...userLeagues, {
-      id: league.id,
-      name: league.name,
-      rank: league.members + 1,
-      points: 0,
-      members: league.members
-    }]
-    setUserLeagues(updatedUserLeagues)
-    localStorage.setItem('userLeagues', JSON.stringify(updatedUserLeagues))
-
-    // Update league member count
-    setAvailableLeagues(prev => prev.map(l => 
-      l.id === league.id ? { ...l, members: l.members + 1 } : l
-    ))
-
-    alert(`Successfully joined ${league.name}!`)
-    setShowJoinModal(false)
-    setJoinKey('')
-    setSelectedLeague(null)
-  }
-
   const handleJoinPrivateLeague = () => {
-    if (!joinKey.trim()) {
+    const key = joinKey.trim().toUpperCase()
+    if (!key) {
       alert('Please enter the join key!')
       return
     }
 
-    if (joinKey.toUpperCase() === selectedLeague.joinKey) {
-      joinLeagueDirectly(selectedLeague)
-    } else {
-      alert('Invalid join key!')
+    // If opened from card, we have selectedLeague; otherwise find by key
+    const targetLeague = selectedLeague || availableLeagues.find(l => l.joinKey === key)
+    if (!targetLeague) {
+      alert('Invalid join key or league not found!')
+      return
     }
+    if (targetLeague.type !== 'private') {
+      alert('This is not a private league.')
+      return
+    }
+    if (targetLeague.joinKey !== key) {
+      alert('Invalid join key!')
+      return
+    }
+    if (!requireTeamBeforeJoin()) return
+
+    joinLeagueDirectly(targetLeague)
   }
 
-  const isLeagueJoined = (leagueId) => {
-    return userLeagues.some(l => l.id === leagueId)
+  const isLeagueJoined = (leagueId) => userLeagues.some(l => l.id === leagueId)
+
+  const leaveLeague = (leagueId) => {
+    const le = availableLeagues.find(l => l.id === leagueId)
+    if (!le) return
+    if (!window.confirm(`Are you sure you want to leave "${le.name}"?`)) return
+
+    const updatedUserLeagues = userLeagues.filter(l => l.id !== leagueId)
+    setUserLeagues(updatedUserLeagues)
+    localStorage.setItem('userLeagues', JSON.stringify(updatedUserLeagues))
+
+    setAvailableLeagues(prev => prev.map(l => l.id === leagueId ? { ...l, members: Math.max(0, l.members - 1) } : l))
+
+    setDetailsOpen(false)
+    setDetailsLeague(null)
+    setLeaderboard([])
+    alert('You have left the league.')
+  }
+
+  const deleteLeague = (leagueId) => {
+    const le = availableLeagues.find(l => l.id === leagueId)
+    if (!le) return
+    if (le.type !== 'private') return
+    if ((user?.username || 'User') !== le.creator) {
+      alert('Only the league owner can delete this private league.')
+      return
+    }
+    if (!window.confirm(`Delete private league "${le.name}"? This cannot be undone.`)) return
+
+    setAvailableLeagues(prev => prev.filter(l => l.id !== leagueId))
+    const updatedUserLeagues = userLeagues.filter(l => l.id !== leagueId)
+    setUserLeagues(updatedUserLeagues)
+    localStorage.setItem('userLeagues', JSON.stringify(updatedUserLeagues))
+
+    const totalsKey = 'userLeagueTotals'
+    const totals = JSON.parse(localStorage.getItem(totalsKey) || '{}')
+    delete totals[leagueId]
+    localStorage.setItem(totalsKey, JSON.stringify(totals))
+
+    setDetailsOpen(false)
+    setDetailsLeague(null)
+    setLeaderboard([])
+    alert('League deleted.')
   }
 
   return (
@@ -170,7 +290,13 @@ function Leagues({ user }) {
       </div>
 
       <div className="league-actions">
-        <button onClick={() => setShowJoinModal(true)} className="action-btn join-btn">
+        <button
+          onClick={() => {
+            setSelectedLeague(null) // generic join by key
+            setShowJoinModal(true)
+          }}
+          className="action-btn join-btn"
+        >
           Join a League
         </button>
         <button onClick={() => setShowCreateModal(true)} className="action-btn create-btn">
@@ -178,7 +304,6 @@ function Leagues({ user }) {
         </button>
       </div>
 
-      {/* My Leagues Section */}
       <div className="my-leagues-section">
         <h2>My Leagues ({userLeagues.length})</h2>
         {userLeagues.length === 0 ? (
@@ -191,7 +316,7 @@ function Leagues({ user }) {
               <div key={league.id} className="league-card my-league">
                 <div className="league-card-header">
                   <h3>{league.name}</h3>
-                  <span className="members-badge">👥 {league.members || 'N/A'} members</span>
+                  <span className="members-badge">👥 {league.members ?? 'N/A'} members</span>
                 </div>
                 <div className="league-stats">
                   <div className="stat">
@@ -203,14 +328,15 @@ function Leagues({ user }) {
                     <span className="stat-value">{league.points}</span>
                   </div>
                 </div>
-                <button className="view-details-btn">View Details</button>
+                <button className="view-details-btn" onClick={() => openLeagueDetails(league.id)}>
+                  View Details
+                </button>
               </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* Available Leagues Section */}
       <div className="available-leagues-section">
         <h2>Available Leagues</h2>
         <div className="leagues-grid">
@@ -286,17 +412,14 @@ function Leagues({ user }) {
             </div>
             <div className="modal-footer">
               <button onClick={handleCreateLeague} className="modal-btn add-btn">Create</button>
-              <button onClick={() => {
-                setNewLeague({ name: '', type: 'public' })
-                setShowCreateModal(false)
-              }} className="modal-btn clear-btn">Cancel</button>
+              <button onClick={() => { setNewLeague({ name: '', type: 'public' }); setShowCreateModal(false) }} className="modal-btn clear-btn">Cancel</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Join Private League Modal */}
-      {showJoinModal && selectedLeague && (
+      {/* Join Private League Modal (also supports generic join-by-key) */}
+      {showJoinModal && (
         <div className="modal-overlay" onClick={() => setShowJoinModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
@@ -305,7 +428,9 @@ function Leagues({ user }) {
             </div>
             <div className="modal-body">
               <p className="modal-description">
-                "{selectedLeague.name}" is a private league. Please enter the join key to join.
+                {selectedLeague
+                  ? `"${selectedLeague.name}" is a private league. Enter the join key to join.`
+                  : 'Enter a private league join key to join.'}
               </p>
               <div className="form-group">
                 <label>Join Key *</label>
@@ -320,11 +445,70 @@ function Leagues({ user }) {
             </div>
             <div className="modal-footer">
               <button onClick={handleJoinPrivateLeague} className="modal-btn add-btn">Join</button>
-              <button onClick={() => {
-                setJoinKey('')
-                setShowJoinModal(false)
-                setSelectedLeague(null)
-              }} className="modal-btn clear-btn">Cancel</button>
+              <button onClick={() => { setJoinKey(''); setSelectedLeague(null); setShowJoinModal(false) }} className="modal-btn clear-btn">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* League Details Modal (Leaderboard) */}
+      {detailsOpen && detailsLeague && (
+        <div className="modal-overlay" onClick={() => setDetailsOpen(false)}>
+          <div className="modal-content league-details-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{detailsLeague.name} — Leaderboard</h2>
+              <button onClick={() => setDetailsOpen(false)} className="close-btn">×</button>
+            </div>
+            <div className="modal-body">
+              <div className="leaderboard-meta">
+                <span className={`type-badge ${detailsLeague.type}`}>
+                  {detailsLeague.type === 'private' ? '🔒 Private' : '🌐 Public'}
+                </span>
+                <span className="members-badge">👥 {detailsLeague.members} members</span>
+                <span className="creator-badge">👑 Owner: {detailsLeague.creator}</span>
+              </div>
+
+              <div className="leaderboard-table-wrap">
+                <table className="leaderboard-table">
+                  <thead>
+                    <tr>
+                      <th>Rank</th>
+                      <th>Team name / Username</th>
+                      <th>GW Points</th>
+                      <th>Total Points</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {leaderboard.map(row => {
+                      const isMe = row.username === (user?.username || 'User')
+                      return (
+                        <tr key={`${row.username}-${row.teamName}`} className={isMe ? 'me' : ''}>
+                          <td>#{row.rank}</td>
+                          <td>
+                            <div className="team-user">
+                              <strong>{row.teamName}</strong>
+                              <span className="username">@{row.username}</span>
+                            </div>
+                          </td>
+                          <td>{row.gwPoints}</td>
+                          <td>{row.totalPoints}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="modal-footer modal-footer-actions">
+              <button className="modal-btn danger-btn" onClick={() => leaveLeague(detailsLeague.id)}>
+                Leave League
+              </button>
+              {detailsLeague.type === 'private' && (user?.username || 'User') === detailsLeague.creator && (
+                <button className="modal-btn delete-btn" onClick={() => deleteLeague(detailsLeague.id)} title="Only the owner of a private league can delete it">
+                  Delete League
+                </button>
+              )}
             </div>
           </div>
         </div>

@@ -310,3 +310,100 @@
     padding: 0.75rem 0.5rem;
   }
 }
+
+
+.no-team-message.card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+.no-team-message .cta-btn {
+  margin-top: 1rem;
+  background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%);
+  color: #fff;
+  border: none;
+  padding: 0.9rem 1.5rem;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.player-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.player-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  border: 1px solid #eee;
+}
+.player-list-item .left {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+.player-list-item .avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  font-size: 1.1rem;
+}
+.player-list-item .info .name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.player-list-item .info .meta {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.15rem;
+  align-items: center;
+}
+.player-list-item .right {
+  text-align: right;
+}
+.player-list-item .right .note {
+  font-size: 0.8rem;
+  color: #7f8c8d;
+}
+.player-list-item .right .points {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #2ecc71;
+}
+.chip {
+  display: inline-block;
+  font-size: 0.75rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 6px;
+  font-weight: 700;
+}
+.chip.captain {
+  background: #ffd700;
+  color: #2c3e50;
+}
+.chip.vice {
+  background: #c0c0c0;
+  color: #2c3e50;
+}
+.player-list-footer {
+  margin-top: 1rem;
+  border-top: 1px solid #eee;
+  padding-top: 0.75rem;
+}
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.05rem;
+}

@@ -9,7 +9,6 @@ function MainMenu({ user }) {
     overallRank: 0,
     totalUsers: 15420,
     gameweekPoints: 0,
-    teamsCreated: 0,
     leaguesJoined: 0
   })
 
@@ -17,17 +16,16 @@ function MainMenu({ user }) {
     // Load user stats from localStorage
     const storedTeam = localStorage.getItem('userTeam')
     const storedLeagues = localStorage.getItem('userLeagues')
-    
+
     if (storedTeam) {
       setStats(prev => ({
         ...prev,
-        teamsCreated: 1,
         overallPoints: 856,
         overallRank: 2341,
         gameweekPoints: 78
       }))
     }
-    
+
     if (storedLeagues) {
       const leagues = JSON.parse(storedLeagues)
       setStats(prev => ({
@@ -77,14 +75,6 @@ function MainMenu({ user }) {
           </div>
         </div>
 
-        <div className="stat-card purple">
-          <div className="stat-icon">🎯</div>
-          <div className="stat-content">
-            <div className="stat-value">{stats.teamsCreated}</div>
-            <div className="stat-label">Teams Created</div>
-          </div>
-        </div>
-
         <div className="stat-card orange">
           <div className="stat-icon">🎪</div>
           <div className="stat-content">
@@ -131,19 +121,6 @@ function MainMenu({ user }) {
             <span className="action-icon">📊</span>
             <h3>Player Stats</h3>
             <p>Analyze players</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="recent-activity">
-        <h2>Recent Activity</h2>
-        <div className="activity-list">
-          <div className="activity-item">
-            <span className="activity-icon">✅</span>
-            <div className="activity-content">
-              <p className="activity-text">Account created successfully</p>
-              <p className="activity-time">Just now</p>
-            </div>
           </div>
         </div>
       </div>

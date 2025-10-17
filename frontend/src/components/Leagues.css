@@ -394,3 +394,75 @@
     width: 95%;
   }
 }
+
+.league-details-modal .leaderboard-meta {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.creator-badge {
+  background: #eef2f7;
+  color: #2c3e50;
+  padding: 0.35rem 0.7rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.leaderboard-table-wrap {
+  max-height: 60vh;
+  overflow: auto;
+  border: 1px solid #f0f0f0;
+  border-radius: 12px;
+}
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.leaderboard-table thead {
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+  padding: 0.9rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid #f3f3f3;
+}
+
+.leaderboard-table tbody tr.me {
+  background: #fff9e6;
+}
+
+.team-user {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.team-user .username {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+}
+
+/* Modal footer actions */
+.modal-footer.modal-footer-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.modal-btn.danger-btn {
+  background: linear-gradient(90deg, #e67e22 0%, #d35400 100%);
+  color: #fff;
+}
+
+.modal-btn.delete-btn {
+  background: linear-gradient(90deg, #e74c3c 0%, #c0392b 100%);
+  color: #fff;
+}
