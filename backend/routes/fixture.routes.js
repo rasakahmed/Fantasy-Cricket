@@ -1,9 +1,12 @@
 import express from 'express';
+import {
+  listFixtures,
+  getFixtureDetails
+} from '../controllers/fixture.controller.js';
 
 const router = express.Router();
 
-router.get('/', (req, res) => {
-  res.json({ success: true, data: [], message: 'List fixtures endpoint (to be implemented)' });
-});
+router.get('/', listFixtures);
+router.get('/:id', getFixtureDetails);
 
 export default router;

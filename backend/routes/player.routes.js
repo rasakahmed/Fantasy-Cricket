@@ -1,9 +1,14 @@
 import express from 'express';
+import {
+  listPlayers,
+  getPlayerDetails,
+  getPlayerStats
+} from '../controllers/player.controller.js';
 
 const router = express.Router();
 
-router.get('/', (req, res) => {
-  res.json({ success: true, data: [], message: 'List players endpoint (to be implemented)' });
-});
+router.get('/', listPlayers);
+router.get('/:id', getPlayerDetails);
+router.get('/:id/stats', getPlayerStats);
 
 export default router;

@@ -1,5 +1,16 @@
 import express from 'express';
 import { authenticateToken, requireAdmin } from '../middleware/auth.js';
+import {
+  listGameweeks,
+  createGameweek,
+  updateGameweek,
+  deleteGameweek,
+  listFixtures,
+  createFixture,
+  updateFixture,
+  addPlayerPoints,
+  bulkAddPlayerPoints
+} from '../controllers/admin.controller.js';
 
 const router = express.Router();
 
@@ -7,29 +18,19 @@ const router = express.Router();
 router.use(authenticateToken);
 router.use(requireAdmin);
 
-// Placeholder routes - to be implemented
-router.get('/gameweeks', (req, res) => {
-  res.json({ success: true, data: [], message: 'Admin gameweeks endpoint (to be implemented)' });
-});
+// Gameweek routes
+router.get('/gameweeks', listGameweeks);
+router.post('/gameweeks', createGameweek);
+router.patch('/gameweeks/:id', updateGameweek);
+router.delete('/gameweeks/:id', deleteGameweek);
 
-router.post('/gameweeks', (req, res) => {
-  res.json({ success: true, message: 'Create gameweek endpoint (to be implemented)' });
-});
+// Fixture routes
+router.get('/fixtures', listFixtures);
+router.post('/fixtures', createFixture);
+router.patch('/fixtures/:id', updateFixture);
 
-router.get('/fixtures', (req, res) => {
-  res.json({ success: true, data: [], message: 'Admin fixtures endpoint (to be implemented)' });
-});
-
-router.post('/fixtures', (req, res) => {
-  res.json({ success: true, message: 'Create fixture endpoint (to be implemented)' });
-});
-
-router.post('/player-points', (req, res) => {
-  res.json({ success: true, message: 'Add player points endpoint (to be implemented)' });
-});
-
-router.post('/player-points/bulk', (req, res) => {
-  res.json({ success: true, message: 'Bulk add player points endpoint (to be implemented)' });
-});
+// Player points routes
+router.post('/player-points', addPlayerPoints);
+router.post('/player-points/bulk', bulkAddPlayerPoints);
 
 export default router;
