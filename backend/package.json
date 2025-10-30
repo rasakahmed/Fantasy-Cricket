@@ -1,0 +1,36 @@
+{
+  "name": "fantasy-cricket-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Fantasy Cricket Platform",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "lint": "eslint ."
+  },
+  "keywords": ["fantasy", "cricket", "api"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "mysql2": "^3.6.5",
+    "dotenv": "^16.3.1",
+    "jsonwebtoken": "^9.0.2",
+    "bcrypt": "^5.1.1",
+    "joi": "^17.11.0",
+    "winston": "^3.11.0",
+    "cors": "^2.8.5",
+    "express-rate-limit": "^7.1.5",
+    "helmet": "^7.1.0",
+    "multer": "^1.4.5-lts.1",
+    "csv-parse": "^5.5.3"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3",
+    "eslint": "^8.55.0"
+  }
+}

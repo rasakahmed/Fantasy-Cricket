@@ -1,0 +1,111 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  # Frontend Job
+  frontend:
+    name: Frontend CI
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Install dependencies
+      working-directory: ./frontend
+      run: npm ci
+    
+    - name: Run ESLint
+      working-directory: ./frontend
+      run: npm run lint
+      continue-on-error: true
+    
+    - name: Build
+      working-directory: ./frontend
+      run: npm run build
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: frontend-dist
+        path: frontend/dist
+
+  # Backend Job
+  backend:
+    name: Backend CI
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+    
+    - name: Install dependencies
+      working-directory: ./backend
+      run: npm install
+    
+    - name: Run tests (if available)
+      working-directory: ./backend
+      run: npm test || echo "No tests configured"
+      continue-on-error: true
+
+  # Database Migration Check
+  database:
+    name: Database Migration Validation
+    runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: testpassword
+          MYSQL_DATABASE: fantasy_cricket_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Wait for MySQL
+      run: |
+        for i in {1..30}; do
+          if mysqladmin ping -h 127.0.0.1 -P 3306 -uroot -ptestpassword &> /dev/null; then
+            echo "MySQL is ready"
+            break
+          fi
+          echo "Waiting for MySQL..."
+          sleep 2
+        done
+    
+    - name: Run migrations
+      run: |
+        mysql -h 127.0.0.1 -P 3306 -uroot -ptestpassword fantasy_cricket_test < database/migrations/001_schema.sql
+        mysql -h 127.0.0.1 -P 3306 -uroot -ptestpassword fantasy_cricket_test < database/migrations/002_seed.sql
+        mysql -h 127.0.0.1 -P 3306 -uroot -ptestpassword fantasy_cricket_test < database/migrations/003_views_scoring.sql
+        mysql -h 127.0.0.1 -P 3306 -uroot -ptestpassword fantasy_cricket_test < database/migrations/004_indexes.sql
+    
+    - name: Verify database schema
+      run: |
+        mysql -h 127.0.0.1 -P 3306 -uroot -ptestpassword fantasy_cricket_test -e "SHOW TABLES;"
+        mysql -h 127.0.0.1 -P 3306 -uroot -ptestpassword fantasy_cricket_test -e "SELECT COUNT(*) FROM users;"

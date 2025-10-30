@@ -1,0 +1,233 @@
+// Fantasy Cricket Database Schema (DBML)
+// Use https://dbdiagram.io to visualize
+
+Project FantasyCricket {
+  database_type: 'MySQL'
+  Note: 'Fantasy Cricket Platform - Normalized Database Schema'
+}
+
+Table users {
+  id int [pk, increment]
+  username varchar(50) [unique, not null]
+  email varchar(100) [unique, not null]
+  password_hash varchar(255) [not null]
+  full_name varchar(100) [not null]
+  is_admin boolean [default: false]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  indexes {
+    email
+    username
+    is_admin
+  }
+  
+  Note: 'User accounts with authentication details'
+}
+
+Table real_teams {
+  id int [pk, increment]
+  name varchar(100) [unique, not null]
+  short_code varchar(10) [unique, not null]
+  logo_url varchar(255)
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  indexes {
+    short_code
+  }
+  
+  Note: 'Real cricket teams (IPL franchises)'
+}
+
+Table players {
+  id int [pk, increment]
+  name varchar(100) [not null]
+  real_team_id int [not null, ref: > real_teams.id]
+  role varchar(20) [not null, note: 'Batsman, Bowler, All-Rounder, Wicket-Keeper']
+  cost decimal(5,2) [not null]
+  rating varchar(5)
+  is_active boolean [default: true]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  indexes {
+    real_team_id
+    role
+    is_active
+    (real_team_id, role)
+  }
+  
+  Note: 'Real cricket players available for fantasy selection'
+}
+
+Table gameweeks {
+  id int [pk, increment]
+  gameweek_number int [unique, not null]
+  name varchar(100) [not null]
+  start_date date [not null]
+  end_date date [not null]
+  is_active boolean [default: false]
+  is_completed boolean [default: false]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  indexes {
+    gameweek_number
+    is_active
+    (start_date, end_date)
+  }
+  
+  Note: 'Tournament rounds/gameweeks'
+}
+
+Table fixtures {
+  id int [pk, increment]
+  gameweek_id int [not null, ref: > gameweeks.id]
+  home_team_id int [not null, ref: > real_teams.id]
+  away_team_id int [not null, ref: > real_teams.id]
+  match_date datetime [not null]
+  venue varchar(200)
+  status varchar(20) [default: 'Scheduled', note: 'Scheduled, In Progress, Completed, Cancelled']
+  home_score varchar(50)
+  away_score varchar(50)
+  winner_team_id int [ref: > real_teams.id]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  indexes {
+    gameweek_id
+    match_date
+    status
+    (gameweek_id, status)
+  }
+  
+  Note: 'Cricket matches/fixtures'
+}
+
+Table fantasy_teams {
+  id int [pk, increment]
+  user_id int [not null, ref: > users.id]
+  team_name varchar(100) [not null]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  indexes {
+    user_id
+    (user_id, team_name) [unique]
+  }
+  
+  Note: 'User-created fantasy teams'
+}
+
+Table fantasy_team_squads {
+  id int [pk, increment]
+  fantasy_team_id int [not null, ref: > fantasy_teams.id]
+  gameweek_id int [not null, ref: > gameweeks.id]
+  captain_player_id int [ref: > players.id]
+  vice_captain_player_id int [ref: > players.id]
+  is_submitted boolean [default: false]
+  submitted_at timestamp
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  indexes {
+    gameweek_id
+    is_submitted
+    (fantasy_team_id, gameweek_id) [unique]
+    (captain_player_id, vice_captain_player_id)
+  }
+  
+  Note: 'Fantasy team composition per gameweek'
+}
+
+Table fantasy_team_squad_players {
+  id int [pk, increment]
+  squad_id int [not null, ref: > fantasy_team_squads.id]
+  player_id int [not null, ref: > players.id]
+  is_playing_11 boolean [default: true]
+  position_order int
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  indexes {
+    squad_id
+    player_id
+    (squad_id, player_id) [unique]
+  }
+  
+  Note: 'Individual players in a fantasy squad'
+}
+
+Table leagues {
+  id int [pk, increment]
+  league_name varchar(100) [not null]
+  league_code varchar(20) [unique, not null]
+  created_by_user_id int [not null, ref: > users.id]
+  is_public boolean [default: true]
+  max_members int [default: 100]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  indexes {
+    league_code
+    is_public
+    created_by_user_id
+  }
+  
+  Note: 'Competition leagues (public or private)'
+}
+
+Table league_memberships {
+  id int [pk, increment]
+  league_id int [not null, ref: > leagues.id]
+  fantasy_team_id int [not null, ref: > fantasy_teams.id]
+  joined_at timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  indexes {
+    league_id
+    fantasy_team_id
+    (league_id, fantasy_team_id) [unique]
+  }
+  
+  Note: 'Team memberships in leagues'
+}
+
+Table player_gameweek_points {
+  id int [pk, increment]
+  player_id int [not null, ref: > players.id]
+  gameweek_id int [not null, ref: > gameweeks.id]
+  fixture_id int [ref: > fixtures.id]
+  
+  // Batting stats
+  runs_scored int [default: 0]
+  fours int [default: 0]
+  sixes int [default: 0]
+  is_duck boolean [default: false]
+  
+  // Bowling stats
+  wickets int [default: 0]
+  maiden_overs int [default: 0]
+  dot_balls int [default: 0]
+  
+  // Fielding stats
+  catches int [default: 0]
+  stumpings int [default: 0]
+  run_outs int [default: 0]
+  
+  // Computed points
+  batting_points int [default: 0]
+  bowling_points int [default: 0]
+  fielding_points int [default: 0]
+  total_points int [default: 0]
+  
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  indexes {
+    player_id
+    gameweek_id
+    fixture_id
+    (player_id, gameweek_id, fixture_id) [unique]
+  }
+  
+  Note: 'Player performance stats and points per gameweek'
+}

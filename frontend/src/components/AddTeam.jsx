@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { players } from '../data/mockData'
 import './AddTeam.css'
 
-function AddTeam({ user }) {
+function AddTeam() {
   const [teamExists, setTeamExists] = useState(false)
   const [teamName, setTeamName] = useState('')
   const [selectedPlayers, setSelectedPlayers] = useState({
