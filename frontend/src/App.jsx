@@ -12,6 +12,7 @@ import Points from './components/Points'
 import Fixtures from './components/Fixtures'
 import Stats from './components/Stats'
 import Help from './components/Help'
+import Leaderboard from './components/Leaderboard'
 import './App.css'
 
 function App() {
@@ -76,6 +77,12 @@ function App() {
           } />
           <Route path="/help" element={
             isAuthenticated ? <Help /> : <Navigate to="/" />
+          } />
+          <Route path="/leaderboard" element={
+            isAuthenticated ? <Leaderboard /> : <Navigate to="/" />
+          } />
+          <Route path="/leaderboard/:leagueId" element={
+            isAuthenticated ? <Leaderboard /> : <Navigate to="/" />
           } />
         </Routes>
       </div>

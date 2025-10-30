@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { players } from '../data/mockData'
 import './ModifyTeam.css'
 
-function ModifyTeam({ user }) {
+function ModifyTeam() {
   const [currentTeam, setCurrentTeam] = useState(null)
   const [modifiedPosition, setModifiedPosition] = useState('')
   const [newPlayer, setNewPlayer] = useState(null)
