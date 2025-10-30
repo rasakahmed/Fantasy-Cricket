@@ -130,8 +130,8 @@
 
 ### Prerequisites
 ```bash
-Node.js 18+
-MySQL 8+
+Node.js 18.17.0+
+MySQL 8.0+
 npm or yarn
 ```
 
